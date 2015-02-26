@@ -10,7 +10,8 @@ function BrowserEventBus( options ) {
     
     self._options = extend( {
         namespace: '',
-        domain: '*'
+        target: '*',
+        origin: '*'
     }, options );
     
     window.addEventListener( 'message', self._onMessage.bind( self ), false );
@@ -28,20 +29,21 @@ BrowserEventBus.prototype.emit = function() {
     var args = Array.prototype.slice.call( arguments, 0 );
     var event = ( self._options.namespace ? self._options.namespace + ':' : '' ) + JSON.stringify( args );
 
+    // get all our contained frames
+    var targets = Array.prototype.slice.call( window.frames, 0 );
+    
     // walk up any iframe tree
     var win = ( window === window.parent ) ? null : window.parent;
     while( win ) {
-        win.postMessage( event, self._options.domain );
+        targets.push( win );
         win = ( win === win.parent ) ? null : win.parent;
     }
 
-    // post to all frames we contain
-    for ( var index = 0; index < window.frames.length; ++index ) {
-        win = window.frames[ index ];
-        if ( win !== window ) {
-            win.postMessage( event, self._options.domain );
+    targets.forEach( function( target ) {
+        if ( target !== window ) {
+            target.postMessage( event, self._options.target );
         }
-    }
+    } );
 };
 
 BrowserEventBus.prototype._onMessage = function( event ) {
@@ -51,6 +53,10 @@ BrowserEventBus.prototype._onMessage = function( event ) {
         return;
     }
 
+    if ( self._options.origin !== '*' && event.origin !== self._options.origin ) {
+        return;
+    }
+    
     var json = event.data.slice( self._options.namespace ? self._options.namespace.length + 1 : 0 );
     var msg = null;
     

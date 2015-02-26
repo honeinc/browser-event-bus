@@ -13,7 +13,9 @@ var EventBus = require( 'browser-event-bus' );
 
 // listen for all events in the 'foo' namespace
 var eventBus = new EventBus( {
-    namespace: 'foo'
+    namespace: 'foo', // default: ''
+    target: '//foo.com', // default: '*',
+    origin: '//foo.com', // default: '*'
 } );
 
 eventBus.on( 'pong', function( msg ) {
