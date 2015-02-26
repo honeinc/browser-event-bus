@@ -1,8 +1,7 @@
 
-# Post Emitter
+# browser-event-bus
 
-Talk between a iframe and parent window using events! This is just a wrapper around post message.
-
+A simple wrapper around the postMessage API to simplify event handling.
 
 ## Usage
 
@@ -10,28 +9,33 @@ Talk between a iframe and parent window using events! This is just a wrapper aro
 
 // top level document
 
-var PostEmitter = require( 'post-emitter' ),
-    emitter = new PostEmitter( {
-        selector: 'iframe.embedded-content'
-    } );
+var EventBus = require( 'browser-event-bus' );
 
-emitter.on( 'pong', function( msg ) {
-    console.log( msg ); // foo
+// listen for all events in the 'foo' namespace
+var eventBus = new EventBus( {
+    namespace: 'foo'
 } );
 
-emitter.emit( 'ping' );
+eventBus.on( 'pong', function( msg ) {
+    console.log( msg );
+} );
+
+eventBust.emit( 'ping' );
 
 ```
 
 ```javascript
 
-// in iframe
+// in iframe or other tab
 
-var PostEmitter = require( 'post-emitter' ),
-    emitter = new PostEmitter();
+var EventBus = require( 'browser-event-bus' );
 
-emitter.on( 'ping', function( msg ) {
-    emitter.emit( 'pong', 'foo' );
+var eventBus = new EventBus( {
+    namespace: 'foo'
+} );
+
+eventBus.on( 'ping', function( msg ) {
+    eventBus.emit( 'pong', 'hi!' );
 } );
 
 

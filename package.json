@@ -1,25 +1,34 @@
 {
-  "name": "post-emitter",
-  "version": "0.1.0",
-  "description": "Talk between a iframe and parent window using events",
+  "name": "browser-event-bus",
+  "version": "0.0.1",
+  "description": "A small wrapper around the postMessage API to simplify event handling.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "parentdoc": "browserify examples/index.js -o examples/bundle.js -d",
-    "iframe": "browserify examples/iframe.js -o examples/iframe.bundle.js -d",
-    "examples": "npm run parentdoc && npm run iframe" 
+    "build": "npm run bundle && npm run compress",
+    "bundle": "mkdir -p build && browserify index.js --debug | exorcist build/browser-event-bus.js.map > build/browser-event-bus.js",
+    "compress": "uglifyjs --screw-ie8 --stats build/browser-event-bus.js > build/browser-event-bus.js.min.js",
+    "examples": "browserify examples/test.js -o examples/bundle.js -d"
   },
   "keywords": [
     "postMessage",
     "iframe",
     "communitcation"
   ],
-  "author": "Jacob Lowe",
+  "author": "Andy Burke <aburke@bitflood.org>",
+  "contributors": [
+    {
+      "name": "Jacob Lowe",
+      "url": "https://github.com/jcblw"
+    }
+  ],
   "license": "MIT",
   "dependencies": {
-    "eventemitter2": "^0.4.14"
+    "eventemitter2": "^0.4.14",
+    "extend": "^2.0.0"
   },
   "devDependencies": {
-    "browserify": "^8.1.0"
+    "browserify": "^8.1.0",
+    "exorcist": "^0.1.6"
   }
 }

@@ -1,114 +1,72 @@
-/* global top, self, Emitter, onPostEmitterReady */
 'use strict';
 
-var supported = ( 'postMessage' in window ) && 
-        ( 'bind' in function(){} ) &&
-        ( 'JSON' in window ),
-    isIframe = (top !== self),
-    _Emitter = require('eventemitter2').EventEmitter2;
+var EventEmitter = require( 'eventemitter2' ).EventEmitter2;
+var extend = require( 'extend' );
 
-/*
- * Constructor sets up some simple listeners and
- * gets the element.
- */
+module.exports = BrowserEventBus;
 
-function PostEmitter( options ) {
-    if ( !supported ) {
-        // for now
-        return;
-    }
-
-    // setting basic vars
-    this.isIframe = isIframe;
-    this.options = options || {};
-    this._emitter = new _Emitter( );
-    this.el = (isIframe) ? null : this.getFrame( this.options.selector );
-    this.prefix = new RegExp( '^' + this.options.prefix );
-    this.prefixLength = this.options.prefix.length;
-    this.setOrigin( this.options.origin );
-    this.addListener();
+function BrowserEventBus( options ) {
+    var self = this;
+    
+    self._options = extend( {
+        namespace: '',
+        domain: '*'
+    }, options );
+    
+    window.addEventListener( 'message', self._onMessage.bind( self ), false );
 }
 
-/*
- * Selects a iframe based off the id passed to it
- */
+BrowserEventBus.supported = ( 'postMessage' in window ) && ( 'bind' in function(){} ) && ( 'JSON' in window );
 
-PostEmitter.prototype.getFrame = function ( selector ) {
-    return document.querySelector( selector );
+BrowserEventBus.prototype = Object.create( EventEmitter.prototype, {} );
+
+BrowserEventBus.prototype._emit = BrowserEventBus.prototype.emit;
+
+BrowserEventBus.prototype.emit = function() {
+    var self = this;
+    
+    var args = Array.prototype.slice.call( arguments, 0 );
+    var event = ( self._options.namespace ? self._options.namespace + ':' : '' ) + JSON.stringify( args );
+
+    // walk up any iframe tree
+    var win = ( window === window.parent ) ? null : window.parent;
+    while( win ) {
+        win.postMessage( event, self._options.domain );
+        win = ( win === win.parent ) ? null : win.parent;
+    }
+
+    // post to all frames we contain
+    for ( var index = 0; index < window.frames.length; ++index ) {
+        win = window.frames[ index ];
+        if ( win !== window ) {
+            win.postMessage( event, self._options.domain );
+        }
+    }
 };
 
-PostEmitter.prototype.on = function( ) {
-    this._emitter.on.apply( this._emitter, arguments );    
-};
-
-PostEmitter.prototype.emit = function( ) {
-
-    // splits the arguments into a nice array
-    var args = Array.prototype.slice.call(arguments, 0),
-        event = this.serialize( args );
-
-    var target = this.isIframe ? window.parent : this.el.contentWindow;
-    // emit to the correct location
-    target.postMessage( event, this._origin );
-};
-
-PostEmitter.prototype.setOrigin = function ( origin ) {
-    this._origin = origin || '*';
-};
-
-PostEmitter.prototype.onMessage = function ( e ) {
-
-    // return if it doesnt have a good prefix
-    if ( !this.prefix.test( e.data ) )
-    {
+BrowserEventBus.prototype._onMessage = function( event ) {
+    var self = this;
+    
+    if ( self._options.namespace && event.data.indexOf( self._options.namespace ) !== 0 ) {
         return;
     }
 
-    var msg = this.deserialize( e.data );
-    if ( !msg )
-    {
-        this._emitter.emit( 'error', new Error( 'PostEmitter could not parse event: ' + e.data ) );
+    var json = event.data.slice( self._options.namespace ? self._options.namespace.length + 1 : 0 );
+    var msg = null;
+    
+    try {
+        msg = JSON.parse( json );
+    }
+    catch( ex ) {
+        msg = null;
+        self._emit( 'error', 'browser-event-bus: ' + ex );
         return;
     }
     
-    if ( !Array.isArray( msg ) )
-    {
-        this._emitter.emit( 'error', new Error( 'PostEmitter expects arrays from events. Did not get an array from event: ' + e.data ) );
+    if ( !Array.isArray( msg ) ) {
+        self._emit( 'error', new Error( 'browser-event-bus: Did not get an array from event: ' + event.data ) );
         return;
     }
 
-    this._emitter.emit.apply( this._emitter, msg );
+    self._emit.apply( self, msg );
 };
-
-PostEmitter.prototype.deserialize = function ( msg ) {
-    
-    var json = msg.slice( this.prefixLength );
-    var obj = null;
-    try
-    {
-        obj = JSON.parse( json );
-    }
-    catch ( e )
-    {
-        obj = null;
-        this.emit( 'error', e );
-    }
-    
-    return obj;
-};
-
-PostEmitter.prototype.serialize = function ( msg ) {
-    return this.options.prefix + JSON.stringify(msg);
-};
-
-PostEmitter.prototype.addListener = function ( ) {
-    window.addEventListener('message', this.onMessage.bind( this ), false );
-};
-
-PostEmitter.inIframe = isIframe;
-
-module.exports = PostEmitter;
-
-if( typeof onPostEmitterReady === 'function' ) {
-    onPostEmitterReady( PostEmitter );
-}
