@@ -1,13 +1,13 @@
 {
   "name": "browser-event-bus",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A small wrapper around the postMessage API to simplify event handling.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npm run bundle && npm run compress",
     "bundle": "mkdir -p build/$npm_package_version && browserify index.js --debug | exorcist build/$npm_package_version/browser-event-bus.js.map > build/$npm_package_version/browser-event-bus.js",
-    "compress": "uglifyjs --screw-ie8 --stats build/$npm_package_version/browser-event-bus.js > build/$npm_package_version/browser-event-bus.js.min.js",
+    "compress": "uglifyjs --screw-ie8 --stats build/$npm_package_version/browser-event-bus.js > build/$npm_package_version/browser-event-bus.min.js",
     "examples": "browserify examples/test.js -o examples/bundle.js -d"
   },
   "keywords": [
