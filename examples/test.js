@@ -7,9 +7,9 @@ var eventBus = new EventBus( {
 
 var inIframe = window != window.top;
 
-eventBus.on( 'ping', function( msg ) {
+eventBus.on( 'ping', function( msg, event ) {
     var p = document.createElement( 'p' );
-    p.textContent = JSON.stringify( msg ); 
+    p.textContent = JSON.stringify( msg ) + '\n\n\n' + JSON.stringify( event ) + '\n\n\n=========\n\n\n'; 
     document.body.appendChild( p );
 } );
 

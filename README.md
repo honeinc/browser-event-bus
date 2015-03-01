@@ -18,8 +18,15 @@ var eventBus = new EventBus( {
     origin: '//foo.com', // default: '*'
 } );
 
-eventBus.on( 'pong', function( msg ) {
+eventBus.on( 'pong', function( msg, thing ) {
     console.log( msg );
+    console.log( thing );
+} );
+
+// we also pass the actual postMessage event as the last argument to the
+// handler. it can be useful for getting the origin element, etc.
+eventBus.on( 'yak', function( yak, event ) {
+    console.log( event );
 } );
 
 eventBust.emit( 'ping' );
@@ -37,7 +44,9 @@ var eventBus = new EventBus( {
 } );
 
 eventBus.on( 'ping', function( msg ) {
-    eventBus.emit( 'pong', 'hi!' );
+    eventBus.emit( 'pong', 'hi!', {
+        thing: true
+    } );
 } );
 
 

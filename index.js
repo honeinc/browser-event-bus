@@ -7,6 +7,7 @@ module.exports = BrowserEventBus;
 
 function BrowserEventBus( options ) {
     var self = this;
+    EventEmitter.call( self );
     
     self._options = extend( {
         namespace: '',
@@ -74,5 +75,7 @@ BrowserEventBus.prototype._onMessage = function( event ) {
         return;
     }
 
+    msg.push( event );
+    
     self._emit.apply( self, msg );
 };
