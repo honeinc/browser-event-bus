@@ -8,6 +8,7 @@ module.exports = BrowserEventBus;
 
 function BrowserEventBus( options ) {
     var self = this;
+    EventEmitter.call( self );
     
     self._options = extend( {
         namespace: '',
